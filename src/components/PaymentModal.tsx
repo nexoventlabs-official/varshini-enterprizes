@@ -78,8 +78,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       script.async = true;
       script.defer = false;
 
-      // Add crossorigin for better error reporting
-      script.crossOrigin = 'anonymous';
+      // DO NOT add crossorigin - script tags don't need CORS headers
 
       // Timeout after 15 seconds
       const timeoutId = setTimeout(() => {

@@ -247,7 +247,7 @@
             script.src = 'https://securegw.paytm.in/paytnx/js/checkout.js';
             script.async = true;
             script.type = 'text/javascript';
-            script.crossOrigin = 'anonymous';
+            // DO NOT add crossorigin - script tags don't need CORS
 
             const timeoutId = setTimeout(() => {
                 log('❌ Script load timeout (15 seconds)', 'error');

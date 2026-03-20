@@ -106,6 +106,11 @@ PayTM script doesn't need CORS headers because it's added via `<script>` tag (no
 
 ## 🔧 Fixes Already Applied
 
+✅ **Removed crossorigin attribute from script tag:**
+- ISSUE: Adding `crossorigin="anonymous"` triggered CORS checks
+- SOLUTION: Script tags load cross-origin by DEFAULT - no CORS headers needed
+- This was causing: "Access-Control-Allow-Origin header is missing"
+
 ✅ **Updated index.html:**
 ```html
 <!-- CSP allowing PayTM -->
@@ -121,11 +126,7 @@ PayTM script doesn't need CORS headers because it's added via `<script>` tag (no
 - Timeout handling (15 seconds)
 - Retry mechanism
 - Script caching
-
-✅ **Added crossorigin attribute:**
-```javascript
-script.crossOrigin = 'anonymous';
-```
+- NO crossorigin attribute on script tag
 
 ---
 
