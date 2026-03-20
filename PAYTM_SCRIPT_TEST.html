@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayTM Script Loading Test</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://securegw.paytm.in https://secure.paytmpayments.com;">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .log-container {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+        }
+        .log-info { color: #0066cc; }
+        .log-success { color: #00aa00; }
+        .log-error { color: #cc0000; }
+        .log-warning { color: #ff9900; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover { background: #5568d3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background: #cfe8fc;
+            color: #004085;
+            border: 1px solid #b6d4fe;
+        }
+        details {
+            margin-top: 20px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        details summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 PayTM Script Loading Test</h1>
+        <p class="subtitle">Verify PayTM checkout script loads correctly</p>
+
+        <div id="status" class="status loading">
+            ⏳ Ready to test...
+        </div>
+
+        <button onclick="testPaytmLoad()">🚀 Test PayTM Script Load</button>
+        <button onclick="testPaytmObject()">🔍 Check Paytm Object</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+
+        <div class="log-container" id="logs">
+            <div class="log-entry log-info">Logs will appear here...</div>
+        </div>
+
+        <details>
+            <summary>📋 What This Tests</summary>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Can the PayTM checkout script be loaded from CDN?</li>
+                <li>Is the script blocked by CSP headers?</li>
+                <li>Does the global Paytm object become available?</li>
+                <li>Is CheckoutJS.invoke method accessible?</li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>🔧 Debug Information</summary>
+            <pre id="debugInfo" style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; margin-top: 10px; font-size: 11px;"></pre>
+        </details>
+    </div>
+
+    <script>
+        const logs = document.getElementById('logs');
+        const statusDiv = document.getElementById('status');
+        const debugInfo = document.getElementById('debugInfo');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLogs() {
+            logs.innerHTML = '<div class="log-entry log-info">Logs cleared...</div>';
+        }
+
+        function updateDebugInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                currentUrl: window.location.href,
+                windowPaytm: !!window.Paytm,
+                paytmCheckoutJs: !!window.Paytm?.CheckoutJS,
+                paytmInvoke: !!window.Paytm?.CheckoutJS?.invoke,
+                scriptInDOM: !!document.querySelector('script[src*="checkout.js"]'),
+                documentReady: document.readyState,
+            };
+            debugInfo.textContent = JSON.stringify(info, null, 2);
+        }
+
+        function testPaytmObject() {
+            log('🔍 Checking Paytm object...', 'info');
+            updateDebugInfo();
+
+            if (!window.Paytm) {
+                log('❌ Paytm object not found', 'error');
+                statusDiv.textContent = '❌ Paytm object not found. Try loading script first.';
+                statusDiv.className = 'status error';
+                return;
+            }
+
+            log('✅ Paytm object found', 'success');
+
+            if (!window.Paytm.CheckoutJS) {
+                log('❌ CheckoutJS not found in Paytm', 'error');
+                statusDiv.textContent = '❌ CheckoutJS not available';
+                statusDiv.className = 'status error';
+                return;
+            }
+
+            log('✅ CheckoutJS found', 'success');
+
+            if (!window.Paytm.CheckoutJS.invoke) {
+                log('❌ invoke method not found', 'error');
+                statusDiv.textContent = '❌ invoke method not available';
+                statusDiv.className = 'status error';
+                return;
+            }
+
+            log('✅ invoke method found and ready', 'success');
+            statusDiv.textContent = '✅ PayTM is fully loaded and ready!';
+            statusDiv.className = 'status success';
+        }
+
+        function testPaytmLoad() {
+            statusDiv.textContent = '⏳ Loading PayTM script...';
+            statusDiv.className = 'status loading';
+
+            clearLogs();
+            log('📥 Starting PayTM script load test...', 'info');
+            log('Script URL: https://securegw.paytm.in/paytnx/js/checkout.js', 'info');
+
+            // Check if already loaded
+            if (window.Paytm?.CheckoutJS?.invoke) {
+                log('✅ PayTM already loaded in memory', 'success');
+                testPaytmObject();
+                return;
+            }
+
+            // Check if script tag exists
+            const existingScript = document.querySelector('script[src*="checkout.js"]');
+            if (existingScript) {
+                log('📝 PayTM script tag already exists in DOM', 'warning');
+                log('⏳ Waiting for Paytm object... (this may take a few seconds)', 'info');
+
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    log(`⏳ Check attempt ${attempts}...`, 'info');
+
+                    if (window.Paytm?.CheckoutJS?.invoke) {
+                        clearInterval(checkInterval);
+                        log('✅ Paytm object appeared!', 'success');
+                        testPaytmObject();
+                    } else if (attempts > 50) {
+                        clearInterval(checkInterval);
+                        log('❌ Timeout: Paytm object never appeared', 'error');
+                        statusDiv.textContent = '❌ Script loaded but Paytm object not available';
+                        statusDiv.className = 'status error';
+                        testPaytmObject();
+                    }
+                }, 100);
+                return;
+            }
+
+            // Create and load script
+            log('📍 Creating script tag...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://securegw.paytm.in/paytnx/js/checkout.js';
+            script.async = true;
+            script.type = 'text/javascript';
+            script.crossOrigin = 'anonymous';
+
+            const timeoutId = setTimeout(() => {
+                log('❌ Script load timeout (15 seconds)', 'error');
+                statusDiv.textContent = '❌ Script load timeout';
+                statusDiv.className = 'status error';
+                updateDebugInfo();
+            }, 15000);
+
+            script.onload = () => {
+                clearTimeout(timeoutId);
+                log('✅ Script tag onload event fired', 'success');
+                log('⏳ Waiting for Paytm object to be available...', 'info');
+
+                let attempts = 0;
+                const waitInterval = setInterval(() => {
+                    attempts++;
+                    if (window.Paytm?.CheckoutJS?.invoke) {
+                        log(`✅ Paytm.CheckoutJS.invoke available after ${attempts * 100}ms`, 'success');
+                        clearInterval(waitInterval);
+                        testPaytmObject();
+                    } else if (attempts > 30) {
+                        clearInterval(waitInterval);
+                        log('❌ Paytm object never appeared after 3 seconds', 'error');
+                        statusDiv.textContent = '❌ Script loaded but object not available';
+                        statusDiv.className = 'status error';
+                        updateDebugInfo();
+                    }
+                }, 100);
+            };
+
+            script.onerror = (error) => {
+                clearTimeout(timeoutId);
+                log(`❌ Script load failed: ${error}`, 'error');
+                log('This could be due to:', 'warning');
+                log('  - Network connectivity issue', 'warning');
+                log('  - CSP (Content Security Policy) blocking', 'warning');
+                log('  - CORS issue', 'warning');
+                log('  - PayTM service unavailable', 'warning');
+                statusDiv.textContent = '❌ Failed to load PayTM script';
+                statusDiv.className = 'status error';
+                updateDebugInfo();
+            };
+
+            script.addEventListener('error', (event) => {
+                log(`⚠️ Script error event: ${JSON.stringify(event)}`, 'error');
+            });
+
+            log('📍 Appending script to document head...', 'info');
+            document.head.appendChild(script);
+            log('✅ Script tag appended, waiting for callbacks...', 'success');
+            updateDebugInfo();
+        }
+
+        // Initialize
+        updateDebugInfo();
+        log('🎯 PayTM Script Test Ready', 'success');
+    </script>
+</body>
+</html>
