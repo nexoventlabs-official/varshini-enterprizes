@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration for production
 app.use(cors({
   origin: [
+    'https://varshini-enterprizes.vercel.app',
     'https://varshinienterprises.vercel.app',
     'https://varshini-enterprises-eta.vercel.app',
     'http://localhost:5173',
