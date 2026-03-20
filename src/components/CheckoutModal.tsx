@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/contexts/CartContext';
 
-const BACKEND_URL = 'https://varshini-enterprises-gqnz.onrender.com';
+const BACKEND_URL = 'https://varshini-enterprizes.onrender.com';
 
 interface CheckoutModalProps {
   isOpen: boolean;

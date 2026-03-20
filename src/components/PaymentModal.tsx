@@ -20,7 +20,7 @@ interface PaymentModalProps {
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost'
     ? 'http://localhost:3000'
-    : 'https://varshini-enterprises-gqnz.onrender.com');
+    : 'https://varshini-enterprizes.onrender.com');
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
