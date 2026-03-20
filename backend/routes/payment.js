@@ -31,7 +31,7 @@ console.log('  Callback URL:', PAYTM_CALLBACK_URL);
 console.log('  Merchant Key Length:', merchantKey?.length);
 console.log('  Merchant Key:', merchantKey);
 
-// Initiate payment - Enhanced with JS Checkout support
+// Initiate payment - Proper JS Checkout with txnToken
 router.post('/initiate', async (req, res) => {
   try {
     const { orderId, amount, customerId, customerEmail, customerPhone } = req.body;
@@ -61,13 +61,7 @@ router.post('/initiate', async (req, res) => {
       phone: customerPhone
     });
 
-    console.log('DEBUG: PAYTM_MERCHANT_KEY:', {
-      value: merchantKey,
-      length: merchantKey?.length,
-      type: typeof merchantKey
-    });
-
-    // Build payment parameters for JS Checkout
+    // Build payment parameters for PayTM Initiate Transaction API
     const paytmParams = {
       body: {
         requestType: 'Payment',
@@ -87,7 +81,7 @@ router.post('/initiate', async (req, res) => {
       }
     };
 
-    // Generate checksum
+    // Generate checksum for the request
     const checksum = await PaytmChecksum.generateSignature(
       JSON.stringify(paytmParams.body),
       merchantKey
@@ -102,18 +96,83 @@ router.post('/initiate', async (req, res) => {
       channelId: PAYTM_CHANNEL_ID_WEB
     };
 
-    console.log('✓ Payment initiated successfully for order:', orderId);
-    console.log('  Checksum generated:', checksum.substring(0, 20) + '...');
+    console.log('✓ Initiating PayTM transaction for order:', orderId);
 
-    res.json({
-      success: true,
-      data: {
-        paytmParams,
-        transactionUrl: PAYTM_TRANSACTION_URL,
-        orderId,
-        merchantId: PAYTM_MERCHANT_ID
-      }
+    // Call PayTM Initiate Transaction API
+    const initiateUrl = `https://secure.paytmpayments.com/theia/api/v1/initiateTransaction?mid=${PAYTM_MERCHANT_ID}&orderId=${orderId}`;
+
+    const https = require('https');
+
+    const paytmResponse = await new Promise((resolve, reject) => {
+      const postData = JSON.stringify(paytmParams);
+
+      const options = {
+        hostname: 'secure.paytmpayments.com',
+        port: 443,
+        path: `/theia/api/v1/initiateTransaction?mid=${PAYTM_MERCHANT_ID}&orderId=${orderId}`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout: 10000
+      };
+
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          try {
+            const jsonData = JSON.parse(data);
+            resolve(jsonData);
+          } catch (err) {
+            reject(new Error('Failed to parse PayTM response: ' + err.message));
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        reject(new Error('PayTM API request failed: ' + error.message));
+      });
+
+      request.on('timeout', () => {
+        request.destroy();
+        reject(new Error('PayTM API request timeout'));
+      });
+
+      request.write(postData);
+      request.end();
     });
+
+    // Check if PayTM API returned success
+    if (paytmResponse?.body?.resultInfo?.resultStatus === 'S') {
+      const txnToken = paytmResponse.body.txnToken;
+
+      console.log('✓ Transaction token received from PayTM');
+      console.log('  Order ID:', orderId);
+      console.log('  Amount:', amount);
+      console.log('  Token Length:', txnToken?.length);
+
+      res.json({
+        success: true,
+        data: {
+          txnToken: txnToken,
+          orderId: orderId,
+          amount: amount,
+          customerId: customerId,
+          mid: PAYTM_MERCHANT_ID,
+          website: PAYTM_WEBSITE,
+          callbackUrl: PAYTM_CALLBACK_URL
+        }
+      });
+    } else {
+      const errorMsg = paytmResponse?.body?.resultInfo?.resultMsg || 'PayTM API error';
+      const errorCode = paytmResponse?.body?.resultInfo?.resultCode || 'UNKNOWN';
+      console.error('✗ PayTM API error:', { errorCode, errorMsg });
+      throw new Error(`PayTM Error: ${errorCode} - ${errorMsg}`);
+    }
   } catch (error) {
     console.error('✗ Payment initiation error:', error);
     res.status(500).json({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,27 +36,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  // Load PayTM Checkout Script
-  useEffect(() => {
-    if (isOpen && !window.Paytm) {
-      const script = document.createElement('script');
-      script.src = 'https://securegw.paytm.in/paytnx/js/checkout.js';
-      script.async = true;
-      script.onload = () => {
-        console.log('PayTM Checkout script loaded');
-      };
-      script.onerror = () => {
-        console.error('Failed to load PayTM Checkout script');
-        toast({
-          title: "Error",
-          description: "Failed to load payment gateway. Please refresh and try again.",
-          variant: "destructive",
-        });
-      };
-      document.head.appendChild(script);
-    }
-  }, [isOpen, toast]);
-
   const handlePaytmPayment = async () => {
     setIsProcessing(true);
 
@@ -86,16 +65,64 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const data = await response.json();
 
-      if (data.success) {
-        console.log('Payment initiation successful, preparing checkout');
+      if (data.success && data.data.txnToken) {
+        console.log('✓ Transaction token received from backend');
 
-        // Use PayTM JS Checkout
-        if (window.Paytm && window.Paytm.CheckoutJS) {
-          const { paytmParams } = data.data;
+        // Load PayTM checkout script if not already loaded
+        if (!window.Paytm?.CheckoutJS) {
+          const script = document.createElement('script');
+          script.src = 'https://securegw.paytm.in/paytnx/js/checkout.js';
+          script.async = true;
+          script.onload = () => {
+            console.log('PayTM script loaded, invoking checkout');
+            invokePaytmCheckout(data);
+          };
+          script.onerror = () => {
+            throw new Error('Failed to load PayTM checkout script');
+          };
+          document.head.appendChild(script);
+        } else {
+          invokePaytmCheckout(data);
+        }
+      } else {
+        throw new Error(data.message || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: error instanceof Error ? error.message : "Unable to process payment. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
+  };
 
-          // Initialize checkout
-          window.Paytm.CheckoutJS.onSuccess(async (response) => {
-            console.log('Payment successful:', response);
+  const invokePaytmCheckout = (data: any) => {
+    try {
+      const txnToken = data.data.txnToken;
+      const mid = data.data.mid;
+      const orderId = data.data.orderId;
+      const amount = data.data.amount;
+
+      console.log('Invoking PayTM checkout with:', { mid, orderId, amount });
+
+      if (!window.Paytm?.CheckoutJS?.invoke) {
+        throw new Error('PayTM CheckoutJS.invoke not available');
+      }
+
+      const txn = {
+        clientId: mid,
+        orderId: orderId,
+        token: txnToken,
+        tokenType: 'TXN_TOKEN',
+        amount: amount.toString(),
+        walletCurrency: 'INR',
+        theme: 'new',
+        redirectUrl: `${window.location.origin}/order-confirmation?orderId=${orderId}`,
+        callback: {
+          onSuccess: (response: any) => {
+            console.log('Payment success callback:', response);
             setIsSuccess(true);
             toast({
               title: "Success!",
@@ -104,50 +131,34 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             setTimeout(() => {
               onClose();
             }, 2000);
-          });
-
-          window.Paytm.CheckoutJS.onError((error) => {
-            console.error('Payment error:', error);
+          },
+          onFailure: (error: any) => {
+            console.error('Payment failure callback:', error);
             toast({
               title: "Payment Failed",
               description: "Transaction was cancelled or failed. Please try again.",
               variant: "destructive",
             });
             setIsProcessing(false);
-          });
-
-          // Invoke checkout
-          window.Paytm.CheckoutJS.invoke(paytmParams);
-        } else {
-          // Fallback to form-based redirect if JS library not loaded
-          console.log('PayTM JS not available, using form redirect');
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = data.data.transactionUrl;
-
-          const bodyInput = document.createElement('input');
-          bodyInput.type = 'hidden';
-          bodyInput.name = 'body';
-          bodyInput.value = JSON.stringify(data.data.paytmParams.body);
-          form.appendChild(bodyInput);
-
-          const headInput = document.createElement('input');
-          headInput.type = 'hidden';
-          headInput.name = 'head';
-          headInput.value = JSON.stringify(data.data.paytmParams.head);
-          form.appendChild(headInput);
-
-          document.body.appendChild(form);
-          form.submit();
+          },
+          onCancel: () => {
+            console.log('Payment cancelled by user');
+            toast({
+              title: "Payment Cancelled",
+              description: "You've cancelled the payment. Please try again if you wish to proceed.",
+              variant: "destructive",
+            });
+            setIsProcessing(false);
+          }
         }
-      } else {
-        throw new Error(data.message || 'Payment initiation failed');
-      }
+      };
+
+      window.Paytm.CheckoutJS.invoke(txn);
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Checkout invoke error:', error);
       toast({
-        title: "Payment Failed",
-        description: error instanceof Error ? error.message : "Unable to process payment. Please try again.",
+        title: "Checkout Error",
+        description: error instanceof Error ? error.message : "Failed to invoke checkout",
         variant: "destructive",
       });
       setIsProcessing(false);

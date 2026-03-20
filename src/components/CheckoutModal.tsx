@@ -135,7 +135,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       try {
         const orderId = generateOrderId();
         const customerId = `CUST_${Date.now()}`;
-        
+
+        console.log('Initiating PayTM payment:', { orderId, amount: total, customerId });
+
         const response = await fetch(`${BACKEND_URL}/api/payment/initiate`, {
           method: 'POST',
           headers: {
@@ -150,30 +152,50 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           }),
         });
 
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        if (data.success) {
-          // Create form and submit to Paytm
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = data.data.transactionUrl;
-          
-          const bodyInput = document.createElement('input');
-          bodyInput.type = 'hidden';
-          bodyInput.name = 'body';
-          bodyInput.value = JSON.stringify(data.data.paytmParams.body);
-          form.appendChild(bodyInput);
+        if (data.success && data.data.txnToken) {
+          console.log('✓ Transaction token received, invoking PayTM checkout');
 
-          const headInput = document.createElement('input');
-          headInput.type = 'hidden';
-          headInput.name = 'head';
-          headInput.value = JSON.stringify(data.data.paytmParams.head);
-          form.appendChild(headInput);
+          // Load PayTM checkout script if not already loaded
+          if (!window.Paytm?.CheckoutJS) {
+            const script = document.createElement('script');
+            script.src = 'https://securegw.paytm.in/paytnx/js/checkout.js';
+            script.async = true;
+            document.head.appendChild(script);
 
-          document.body.appendChild(form);
-          form.submit();
+            // Wait for script to load
+            await new Promise(resolve => {
+              script.onload = resolve;
+              setTimeout(resolve, 2000);
+            });
+          }
+
+          // Invoke PayTM Checkout with txnToken
+          const txn = {
+            clientId: data.data.mid,
+            orderId: data.data.orderId,
+            token: data.data.txnToken,
+            tokenType: 'TXN_TOKEN',
+            amount: data.data.amount,
+            walletCurrency: 'INR',
+            theme: 'new',
+            redirectUrl: `${window.location.origin}/order-confirmation?orderId=${data.data.orderId}`
+          };
+
+          console.log('PayTM transaction config:', txn);
+
+          if (window.Paytm?.CheckoutJS?.invoke) {
+            window.Paytm.CheckoutJS.invoke(txn);
+          } else {
+            throw new Error('PayTM CheckoutJS not available');
+          }
         } else {
-          throw new Error(data.message || 'Payment initiation failed');
+          throw new Error(data.message || 'Failed to get transaction token');
         }
       } catch (error) {
         console.error('Payment error:', error);
