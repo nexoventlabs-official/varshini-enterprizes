@@ -38,58 +38,99 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  // Load PayTM script globally
+  // Load PayTM script globally - Enhanced with better error handling
   const loadPaytmScript = (): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // Check if script already loaded
+      console.log('🔍 Checking PayTM script status...');
+
+      // Check if script already loaded and functional
       if (window.Paytm?.CheckoutJS?.invoke) {
-        console.log('✓ PayTM script already loaded');
+        console.log('✅ PayTM script already loaded and ready');
         resolve();
         return;
       }
 
-      // Check if script is already added to DOM
-      if (document.querySelector(`script[src="${PAYTM_SCRIPT}"]`)) {
-        console.log('✓ PayTM script already in DOM, waiting for load...');
-        const checkPaytm = setInterval(() => {
+      // Check if script is already in the DOM
+      const existingScript = document.querySelector(`script[src*="checkout.js"]`);
+      if (existingScript) {
+        console.log('📝 PayTM script already in DOM, waiting for initialization...');
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+          attempts++;
           if (window.Paytm?.CheckoutJS?.invoke) {
-            clearInterval(checkPaytm);
+            console.log(`✅ PayTM initialized after ${attempts * 100}ms`);
+            clearInterval(checkInterval);
             resolve();
+          } else if (attempts > 50) {
+            clearInterval(checkInterval);
+            console.error('❌ PayTM failed to initialize after 5 seconds');
+            reject(new Error('PayTM script loaded but failed to initialize'));
           }
         }, 100);
-
-        setTimeout(() => {
-          clearInterval(checkPaytm);
-          reject(new Error('PayTM script did not load'));
-        }, 5000);
         return;
       }
 
-      // Create and load script
+      // Create and load script with enhanced error handling
+      console.log('📥 Creating new PayTM script tag...');
       const script = document.createElement('script');
       script.type = 'text/javascript';
       script.src = PAYTM_SCRIPT;
       script.async = true;
+      script.defer = false;
+
+      // Add crossorigin for better error reporting
+      script.crossOrigin = 'anonymous';
+
+      // Timeout after 15 seconds
+      const timeoutId = setTimeout(() => {
+        console.error('❌ PayTM script load timeout (15s)');
+        reject(new Error('PayTM script load timeout'));
+      }, 15000);
 
       script.onload = () => {
-        console.log('✓ PayTM script loaded successfully');
-        // Wait a bit for global Paytm object to be available
-        setTimeout(() => {
+        console.log('✅ PayTM script tag onload fired');
+        clearTimeout(timeoutId);
+
+        // Wait for Paytm object to be available
+        let waitAttempts = 0;
+        const waitInterval = setInterval(() => {
+          waitAttempts++;
+          console.log(`⏳ Waiting for Paytm object... (${waitAttempts})`);
+
           if (window.Paytm?.CheckoutJS?.invoke) {
+            console.log('✅ Paytm.CheckoutJS.invoke is available');
+            clearInterval(waitInterval);
             resolve();
-          } else {
-            reject(new Error('PayTM CheckoutJS not available after script load'));
+          } else if (waitAttempts > 30) {
+            clearInterval(waitInterval);
+            console.error('❌ Paytm object not available after 3 seconds');
+            console.log('Window.Paytm:', window.Paytm);
+            console.log('Window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
+            reject(new Error('Paytm object not available after script load'));
           }
-        }, 500);
+        }, 100);
       };
 
-      script.onerror = () => {
-        console.error('✗ Failed to load PayTM script');
-        reject(new Error('Failed to load PayTM checkout script'));
+      script.onerror = (error) => {
+        console.error('❌ PayTM script load failed:', error);
+        clearTimeout(timeoutId);
+
+        // Log detailed error info
+        console.error('Script URL:', PAYTM_SCRIPT);
+        console.error('Error event:', error);
+        console.error('Script element:', script);
+
+        reject(new Error(`Failed to load PayTM script: ${error}`));
       };
 
+      // Handle potential network errors
+      script.addEventListener('error', (event) => {
+        console.error('❌ Script error event:', event);
+      });
+
+      console.log('📍 Appending script to document head...');
       document.head.appendChild(script);
-      console.log('📝 PayTM script added to DOM');
+      console.log('✅ Script appended to DOM, waiting for load...');
     });
   };
 
@@ -101,13 +142,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const amount = paymentData.data.amount;
 
       if (!txnToken || !mid || !orderId) {
-        throw new Error('Missing required payment data');
+        throw new Error('Missing required payment data: txnToken, mid, or orderId');
       }
 
       console.log('🔄 Loading PayTM script...');
       await loadPaytmScript();
 
-      console.log('📋 PayTM checkout config:', {
+      console.log('📋 Invoking PayTM checkout with config:', {
         mid,
         orderId,
         amount,
@@ -115,6 +156,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       });
 
       if (!window.Paytm?.CheckoutJS?.invoke) {
+        console.error('❌ window.Paytm:', window.Paytm);
+        console.error('❌ window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
         throw new Error('PayTM CheckoutJS.invoke method not available');
       }
 
@@ -130,7 +173,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         redirectUrl: `${window.location.origin}/order-confirmation?orderId=${orderId}`,
         callback: {
           onSuccess: (response: any) => {
-            console.log('✅ Payment success callback:', response);
+            console.log('✅ Payment success:', response);
             setIsSuccess(true);
             toast({
               title: "Success!",
@@ -141,19 +184,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             }, 2000);
           },
           onFailure: (error: any) => {
-            console.error('❌ Payment failure callback:', error);
+            console.error('❌ Payment failed:', error);
             toast({
               title: "Payment Failed",
-              description: "Transaction was cancelled or failed. Please try again.",
+              description: "Transaction was unsuccessful. Please try again.",
               variant: "destructive",
             });
             setIsProcessing(false);
           },
           onCancel: () => {
-            console.log('⏸️ Payment cancelled by user');
+            console.log('⏸️ Payment cancelled');
             toast({
-              title: "Payment Cancelled",
-              description: "You've cancelled the payment. Please try again if you wish to proceed.",
+              title: "Cancelled",
+              description: "Payment cancelled. Try again if needed.",
               variant: "destructive",
             });
             setIsProcessing(false);
@@ -161,13 +204,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         }
       };
 
-      console.log('🚀 Invoking Paytm checkout...');
+      console.log('🚀 Calling window.Paytm.CheckoutJS.invoke()...');
       window.Paytm.CheckoutJS.invoke(txn);
     } catch (error) {
-      console.error('❌ Checkout invoke error:', error);
+      console.error('❌ Checkout error:', error);
       toast({
-        title: "Checkout Error",
-        description: error instanceof Error ? error.message : "Failed to invoke checkout",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to open checkout",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -185,10 +228,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         orderId,
         total,
         custId,
-        backendUrl: BACKEND_URL
+        backend: BACKEND_URL
       });
 
-      // Call backend to initiate payment and get txnToken
+      // Call backend to initiate payment
       const response = await fetch(`${BACKEND_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: {
@@ -198,33 +241,36 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           orderId,
           amount: total.toFixed(2),
           customerId: custId,
-          customerEmail: customerEmail || 'customer@varshinienterprises.com',
+          customerEmail: customerEmail || 'customer@example.com',
           customerPhone: customerPhone || '9876543210'
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Backend error! status: ${response.status}`);
+        throw new Error(`Backend error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.message || 'Failed to initiate payment');
+        throw new Error(data.message || 'Payment initiation failed');
       }
 
       if (!data.data?.txnToken) {
-        console.error('❌ Response data:', data);
-        throw new Error('No transaction token received from backend');
+        console.error('Backend response:', data);
+        throw new Error('No txnToken received from backend');
       }
 
-      console.log('✅ Transaction token received from backend');
+      console.log('✅ txnToken received:', {
+        tokenLength: data.data.txnToken.length
+      });
+
       await invokePaytmCheckout(data);
     } catch (error) {
       console.error('❌ Payment error:', error);
       toast({
-        title: "Payment Failed",
-        description: error instanceof Error ? error.message : "Unable to process payment. Please try again.",
+        title: "Payment Error",
+        description: error instanceof Error ? error.message : "Unable to process payment",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -240,10 +286,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h3 className="font-nunito font-bold text-xl text-foreground mb-2">
-              Order Placed Successfully!
+              Payment Successful!
             </h3>
             <p className="text-muted-foreground">
-              Your order will be processed shortly.
+              Your order has been confirmed.
             </p>
           </CardContent>
         </Card>
@@ -253,42 +299,39 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <Card className="w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="font-nunito font-bold text-xl text-foreground">
             Complete Payment
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-full transition-colors"
             disabled={isProcessing}
+            className="p-2 hover:bg-muted rounded-full"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <CardContent className="p-6">
-          {/* Order Summary */}
           <div className="bg-secondary rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-inter text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {itemCount} item{itemCount > 1 ? 's' : ''}
               </span>
-              <span className="font-nunito font-bold text-2xl text-primary">
+              <span className="font-bold text-2xl text-primary">
                 ₹{total.toFixed(2)}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
-              Including all taxes and delivery charges
+              Including taxes and delivery
             </div>
           </div>
 
-          {/* Payment Button */}
           <Button
             onClick={handlePaytmPayment}
             disabled={isProcessing}
             className="w-full h-14 text-lg"
-            size="lg"
           >
             {isProcessing ? (
               <div className="flex items-center space-x-2">
@@ -298,13 +341,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             ) : (
               <div className="flex items-center space-x-2">
                 <CreditCard className="w-5 h-5" />
-                <span>Pay with Paytm</span>
+                <span>Pay ₹{total.toFixed(2)} with Paytm</span>
               </div>
             )}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Secure payment powered by Paytm. Your payment information is encrypted and secure.
+            Secure payment by Paytm. Your data is encrypted.
           </p>
         </CardContent>
       </Card>

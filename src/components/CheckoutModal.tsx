@@ -16,58 +16,99 @@ const BACKEND_URL = 'https://varshini-enterprizes.onrender.com';
 
 const PAYTM_SCRIPT = 'https://securegw.paytm.in/paytnx/js/checkout.js';
 
-// Load PayTM script globally
+// Load PayTM script globally - Enhanced with better error handling
 const loadPaytmScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    // Check if script already loaded
+    console.log('🔍 Checking PayTM script status...');
+
+    // Check if script already loaded and functional
     if (window.Paytm?.CheckoutJS?.invoke) {
-      console.log('✓ PayTM script already loaded');
+      console.log('✅ PayTM script already loaded and ready');
       resolve();
       return;
     }
 
-    // Check if script is already added to DOM
-    if (document.querySelector(`script[src="${PAYTM_SCRIPT}"]`)) {
-      console.log('✓ PayTM script already in DOM, waiting for load...');
-      const checkPaytm = setInterval(() => {
+    // Check if script is already in the DOM
+    const existingScript = document.querySelector(`script[src*="checkout.js"]`);
+    if (existingScript) {
+      console.log('📝 PayTM script already in DOM, waiting for initialization...');
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
         if (window.Paytm?.CheckoutJS?.invoke) {
-          clearInterval(checkPaytm);
+          console.log(`✅ PayTM initialized after ${attempts * 100}ms`);
+          clearInterval(checkInterval);
           resolve();
+        } else if (attempts > 50) {
+          clearInterval(checkInterval);
+          console.error('❌ PayTM failed to initialize after 5 seconds');
+          reject(new Error('PayTM script loaded but failed to initialize'));
         }
       }, 100);
-
-      setTimeout(() => {
-        clearInterval(checkPaytm);
-        reject(new Error('PayTM script did not load'));
-      }, 5000);
       return;
     }
 
-    // Create and load script
+    // Create and load script with enhanced error handling
+    console.log('📥 Creating new PayTM script tag...');
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = PAYTM_SCRIPT;
     script.async = true;
+    script.defer = false;
+
+    // Add crossorigin for better error reporting
+    script.crossOrigin = 'anonymous';
+
+    // Timeout after 15 seconds
+    const timeoutId = setTimeout(() => {
+      console.error('❌ PayTM script load timeout (15s)');
+      reject(new Error('PayTM script load timeout'));
+    }, 15000);
 
     script.onload = () => {
-      console.log('✓ PayTM script loaded successfully');
-      // Wait a bit for global Paytm object to be available
-      setTimeout(() => {
+      console.log('✅ PayTM script tag onload fired');
+      clearTimeout(timeoutId);
+
+      // Wait for Paytm object to be available
+      let waitAttempts = 0;
+      const waitInterval = setInterval(() => {
+        waitAttempts++;
+        console.log(`⏳ Waiting for Paytm object... (${waitAttempts})`);
+
         if (window.Paytm?.CheckoutJS?.invoke) {
+          console.log('✅ Paytm.CheckoutJS.invoke is available');
+          clearInterval(waitInterval);
           resolve();
-        } else {
-          reject(new Error('PayTM CheckoutJS not available after script load'));
+        } else if (waitAttempts > 30) {
+          clearInterval(waitInterval);
+          console.error('❌ Paytm object not available after 3 seconds');
+          console.log('Window.Paytm:', window.Paytm);
+          console.log('Window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
+          reject(new Error('Paytm object not available after script load'));
         }
-      }, 500);
+      }, 100);
     };
 
-    script.onerror = () => {
-      console.error('✗ Failed to load PayTM script');
-      reject(new Error('Failed to load PayTM checkout script'));
+    script.onerror = (error) => {
+      console.error('❌ PayTM script load failed:', error);
+      clearTimeout(timeoutId);
+
+      // Log detailed error info
+      console.error('Script URL:', PAYTM_SCRIPT);
+      console.error('Error event:', error);
+      console.error('Script element:', script);
+
+      reject(new Error(`Failed to load PayTM script: ${error}`));
     };
 
+    // Handle potential network errors
+    script.addEventListener('error', (event) => {
+      console.error('❌ Script error event:', event);
+    });
+
+    console.log('📍 Appending script to document head...');
     document.head.appendChild(script);
-    console.log('📝 PayTM script added to DOM');
+    console.log('✅ Script appended to DOM, waiting for load...');
   });
 };
 
@@ -227,6 +268,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         console.log('✅ Transaction token received from backend');
 
         // Load PayTM script if needed
+        console.log('🔄 Loading PayTM script...');
         await loadPaytmScript();
 
         console.log('📋 PayTM checkout config:', {
@@ -236,6 +278,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         });
 
         if (!window.Paytm?.CheckoutJS?.invoke) {
+          console.error('❌ window.Paytm:', window.Paytm);
+          console.error('❌ window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
           throw new Error('PayTM CheckoutJS.invoke not available');
         }
 
@@ -259,7 +303,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               console.error('❌ Payment failure callback:', error);
               toast({
                 title: "Payment Failed",
-                description: "Transaction was cancelled or failed. Please try again.",
+                description: "Transaction was unsuccessful. Please try again.",
                 variant: "destructive",
               });
               setIsProcessing(false);
@@ -268,7 +312,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               console.log('⏸️ Payment cancelled by user');
               toast({
                 title: "Payment Cancelled",
-                description: "You've cancelled the payment. Please try again if you wish to proceed.",
+                description: "You cancelled the payment. Try again if needed.",
                 variant: "destructive",
               });
               setIsProcessing(false);
