@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: payment-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PAYTM_MERCHANT_ID
+        sync: false
+      - key: PAYTM_MERCHANT_KEY
+        sync: false
+      - key: PAYTM_WEBSITE
+        value: WEBSTAGING
+      - key: PAYTM_INDUSTRY_TYPE
+        value: Retail
+      - key: PAYTM_CHANNEL_ID_WEB
+        value: WEB
+      - key: PAYTM_CHANNEL_ID_WAP
+        value: WAP
+      - key: PAYTM_CALLBACK_URL
+        sync: false
+      - key: PAYTM_TRANSACTION_URL
+        value: https://securegw-stage.paytm.in/order/process
+      - key: PAYTM_STATUS_URL
+        value: https://securegw-stage.paytm.in/order/status
+      - key: PORT
+        value: 3000
