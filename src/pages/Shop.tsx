@@ -7,8 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import ProductCard from '@/components/ProductCard';
 import BackButton from '@/components/BackButton';
 import ScrollToTop from '@/components/ScrollToTop';
-import sanitaryPadsImage from '@/assets/product-sanitary-pads.png';
-import hygienePadsImage from '@/assets/product-hygiene-pads.png';
+import allProducts from '@/data/products';
 
 const Shop = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,75 +16,6 @@ const Shop = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState('all');
 
-  // Sample products data
-  const allProducts = [
-    {
-      id: '1',
-      name: 'Ultra Soft Sanitary Napkins - Regular Flow',
-      price: 45,
-      originalPrice: 60,
-      image: sanitaryPadsImage,
-      category: 'Sanitary Napkins',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: true,
-    },
-    {
-      id: '2',
-      name: 'Organic Cotton Hygiene Pads - Heavy Flow',
-      price: 55,
-      originalPrice: 70,
-      image: hygienePadsImage,
-      category: 'Hygiene Pads',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: true,
-    },
-    {
-      id: '3',
-      name: 'Night Time Protection Pads - Extra Long',
-      price: 65,
-      originalPrice: 80,
-      image: sanitaryPadsImage,
-      category: 'Sanitary Napkins',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: true,
-    },
-    {
-      id: '4',
-      name: 'Bulk Economy Pack - 50 Pieces',
-      price: 120,
-      originalPrice: 180,
-      image: hygienePadsImage,
-      category: 'Bulk Packs',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: true,
-    },
-    {
-      id: '5',
-      name: 'Sensitive Skin Organic Pads',
-      price: 70,
-      originalPrice: 90,
-      image: sanitaryPadsImage,
-      category: 'Hygiene Pads',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: false,
-    },
-    {
-      id: '6',
-      name: 'Daily Panty Liners - Pack of 30',
-      price: 35,
-      originalPrice: 50,
-      image: hygienePadsImage,
-      category: 'Panty Liners',
-      isEcoFriendly: true,
-      isCertified: true,
-      inStock: true,
-    },
-  ];
 
   const categories = [
     'all',

@@ -10,8 +10,7 @@ import BulkOrderModal from '@/components/BulkOrderModal';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useToast } from '@/hooks/use-toast';
-import sanitaryPadsImage from '@/assets/product-sanitary-pads.png';
-import hygienePadsImage from '@/assets/product-hygiene-pads.png';
+import { getProductById, getRelatedProducts } from '@/data/products';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -22,67 +21,34 @@ const ProductDetail = () => {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
 
-  // Sample product data (in real app, this would be fetched based on ID)
-  const product = {
-    id: '1',
-    name: 'Ultra Soft Sanitary Napkins - Regular Flow',
-    price: 45,
-    originalPrice: 60,
-    images: [sanitaryPadsImage, hygienePadsImage, sanitaryPadsImage],
-    category: 'Sanitary Napkins',
-    isEcoFriendly: true,
-    isCertified: true,
-    inStock: true,
-    stockCount: 156,
-    rating: 4.8,
-    reviewCount: 234,
-    description: 'Premium quality sanitary napkins made from 100% organic cotton. Ultra-soft, highly absorbent, and designed for comfort during regular flow days. Dermatologically tested and suitable for sensitive skin.',
-    features: [
-      '100% Organic Cotton Top Layer',
-      'Super Absorbent Core',
-      'Breathable Back Sheet',
-      'Wings for Extra Protection',
-      'Individually Wrapped',
-      'Biodegradable Materials',
-    ],
-    specifications: {
-      'Length': '240mm',
-      'Width': '180mm',
-      'Thickness': '3mm',
-      'Absorbency': 'Regular Flow (8-10 hours)',
-      'Pack Size': '10 pieces',
-      'Material': 'Organic Cotton, Biodegradable Polymer',
-    },
-    certifications: [
-      'ISO 9001:2015 Certified',
-      'FDA Approved Materials',
-      'Dermatologically Tested',
-      'Eco-Friendly Certification',
-    ],
-  };
+  const productData = id ? getProductById(id) : undefined;
+  const relatedProducts = id ? getRelatedProducts(id, 3) : [];
 
-  const relatedProducts = [
-    {
-      id: '2',
-      name: 'Organic Cotton Hygiene Pads',
-      price: 55,
-      originalPrice: 70,
-      image: hygienePadsImage,
-      category: 'Hygiene Pads',
-      isEcoFriendly: true,
-      isCertified: true,
-    },
-    {
-      id: '3',
-      name: 'Night Time Protection Pads',
-      price: 65,
-      originalPrice: 80,
-      image: sanitaryPadsImage,
-      category: 'Sanitary Napkins',
-      isEcoFriendly: true,
-      isCertified: true,
-    },
-  ];
+  if (!productData) {
+    return (
+      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="font-nunito font-bold text-3xl text-foreground mb-4">Product Not Found</h1>
+          <p className="font-inter text-muted-foreground mb-6">The product you are looking for does not exist.</p>
+          <Button asChild>
+            <Link to="/products">Back to Shop</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const product = {
+    ...productData,
+    images: productData.images || [productData.image],
+    stockCount: productData.stockCount || 0,
+    rating: productData.rating || 0,
+    reviewCount: productData.reviewCount || 0,
+    description: productData.description || '',
+    features: productData.features || [],
+    specifications: productData.specifications || {},
+    certifications: productData.certifications || [],
+  };
 
   const handleAddToCart = () => {
     const cartItem = {
