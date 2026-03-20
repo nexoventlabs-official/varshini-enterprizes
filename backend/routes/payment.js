@@ -29,7 +29,7 @@ console.log('  Website:', PAYTM_WEBSITE);
 console.log('  Industry Type:', PAYTM_INDUSTRY_TYPE);
 console.log('  Callback URL:', PAYTM_CALLBACK_URL);
 console.log('  Merchant Key Length:', merchantKey?.length);
-console.log('  Merchant Key:', merchantKey);
+console.log('  Merchant Key:', merchantKey ? '****' + merchantKey.slice(-4) : 'MISSING');
 
 // Initiate payment - Proper JS Checkout with txnToken
 router.post('/initiate', async (req, res) => {
@@ -92,16 +92,10 @@ router.post('/initiate', async (req, res) => {
     }
 
     paytmParams.head = {
-      signature: checksum,
-      channelId: PAYTM_CHANNEL_ID_WEB
+      signature: checksum
     };
 
     console.log('✓ Initiating PayTM transaction for order:', orderId);
-
-    // Call PayTM Initiate Transaction API
-    const initiateUrl = `https://secure.paytmpayments.com/theia/api/v1/initiateTransaction?mid=${PAYTM_MERCHANT_ID}&orderId=${orderId}`;
-
-    const https = require('https');
 
     const paytmResponse = await new Promise((resolve, reject) => {
       const postData = JSON.stringify(paytmParams);
@@ -266,8 +260,7 @@ router.post('/status', async (req, res) => {
     );
 
     paytmParams.head = {
-      signature: checksum,
-      channelId: PAYTM_CHANNEL_ID_WEB
+      signature: checksum
     };
 
     const postData = JSON.stringify(paytmParams);

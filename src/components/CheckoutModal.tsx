@@ -12,102 +12,69 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/contexts/CartContext';
 
-const BACKEND_URL = 'https://varshini-enterprizes.onrender.com';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://varshini-enterprizes.onrender.com');
 
-const PAYTM_SCRIPT = 'https://securegw.paytm.in/paytnx/js/checkout.js';
+const PAYTM_MID = 'WtByJK14940032907936';
+const PAYTM_HOST = 'https://secure.paytmpayments.com';
+const PAYTM_SCRIPT = `${PAYTM_HOST}/merchantpgpui/checkoutjs/merchants/${PAYTM_MID}.js`;
 
 // Load PayTM script globally - Enhanced with better error handling
 const loadPaytmScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    console.log('🔍 Checking PayTM script status...');
-
-    // Check if script already loaded and functional
-    if (window.Paytm?.CheckoutJS?.invoke) {
-      console.log('✅ PayTM script already loaded and ready');
+    if (window.Paytm && window.Paytm.CheckoutJS) {
       resolve();
       return;
     }
 
-    // Check if script is already in the DOM
-    const existingScript = document.querySelector(`script[src*="checkout.js"]`);
+    const existingScript = document.querySelector(`script[src*="merchantpgpui/checkoutjs"]`);
     if (existingScript) {
-      console.log('📝 PayTM script already in DOM, waiting for initialization...');
       let attempts = 0;
       const checkInterval = setInterval(() => {
         attempts++;
-        if (window.Paytm?.CheckoutJS?.invoke) {
-          console.log(`✅ PayTM initialized after ${attempts * 100}ms`);
+        if (window.Paytm && window.Paytm.CheckoutJS) {
           clearInterval(checkInterval);
           resolve();
-        } else if (attempts > 50) {
+        } else if (attempts > 100) {
           clearInterval(checkInterval);
-          console.error('❌ PayTM failed to initialize after 5 seconds');
-          reject(new Error('PayTM script loaded but failed to initialize'));
+          reject(new Error('PayTM script loaded but CheckoutJS not available'));
         }
       }, 100);
       return;
     }
 
-    // Create and load script with enhanced error handling
-    console.log('📥 Creating new PayTM script tag...');
     const script = document.createElement('script');
-    script.type = 'text/javascript';
+    script.type = 'application/javascript';
     script.src = PAYTM_SCRIPT;
-    script.async = true;
-    script.defer = false;
+    script.crossOrigin = 'anonymous';
 
-    // DO NOT add crossorigin - script tags don't need CORS headers
-
-    // Timeout after 15 seconds
     const timeoutId = setTimeout(() => {
-      console.error('❌ PayTM script load timeout (15s)');
       reject(new Error('PayTM script load timeout'));
-    }, 15000);
+    }, 20000);
 
     script.onload = () => {
-      console.log('✅ PayTM script tag onload fired');
       clearTimeout(timeoutId);
-
-      // Wait for Paytm object to be available
       let waitAttempts = 0;
       const waitInterval = setInterval(() => {
         waitAttempts++;
-        console.log(`⏳ Waiting for Paytm object... (${waitAttempts})`);
-
-        if (window.Paytm?.CheckoutJS?.invoke) {
-          console.log('✅ Paytm.CheckoutJS.invoke is available');
+        if (window.Paytm && window.Paytm.CheckoutJS) {
           clearInterval(waitInterval);
           resolve();
-        } else if (waitAttempts > 30) {
+        } else if (waitAttempts > 50) {
           clearInterval(waitInterval);
-          console.error('❌ Paytm object not available after 3 seconds');
-          console.log('Window.Paytm:', window.Paytm);
-          console.log('Window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
-          reject(new Error('Paytm object not available after script load'));
+          reject(new Error('Paytm CheckoutJS not available after script load'));
         }
       }, 100);
     };
 
     script.onerror = (error) => {
-      console.error('❌ PayTM script load failed:', error);
       clearTimeout(timeoutId);
-
-      // Log detailed error info
-      console.error('Script URL:', PAYTM_SCRIPT);
-      console.error('Error event:', error);
-      console.error('Script element:', script);
-
-      reject(new Error(`Failed to load PayTM script: ${error}`));
+      reject(new Error(`Failed to load PayTM script from ${PAYTM_SCRIPT}`));
     };
 
-    // Handle potential network errors
-    script.addEventListener('error', (event) => {
-      console.error('❌ Script error event:', event);
-    });
-
-    console.log('📍 Appending script to document head...');
     document.head.appendChild(script);
-    console.log('✅ Script appended to DOM, waiting for load...');
   });
 };
 
@@ -264,63 +231,75 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           throw new Error('No transaction token received from backend');
         }
 
-        console.log('✅ Transaction token received from backend');
-
-        // Load PayTM script if needed
-        console.log('🔄 Loading PayTM script...');
         await loadPaytmScript();
 
-        console.log('📋 PayTM checkout config:', {
-          mid: data.data.mid,
-          orderId: data.data.orderId,
-          amount: data.data.amount
-        });
-
-        if (!window.Paytm?.CheckoutJS?.invoke) {
-          console.error('❌ window.Paytm:', window.Paytm);
-          console.error('❌ window.Paytm?.CheckoutJS:', window.Paytm?.CheckoutJS);
-          throw new Error('PayTM CheckoutJS.invoke not available');
+        if (!window.Paytm || !window.Paytm.CheckoutJS) {
+          throw new Error('PayTM CheckoutJS not available after script load');
         }
 
-        // Invoke PayTM Checkout with txnToken
-        const txn = {
-          clientId: data.data.mid,
-          orderId: data.data.orderId,
-          token: data.data.txnToken,
-          tokenType: 'TXN_TOKEN',
-          amount: String(data.data.amount),
-          walletCurrency: 'INR',
-          theme: 'new',
-          redirectUrl: `${window.location.origin}/order-confirmation?orderId=${data.data.orderId}`,
-          callback: {
-            onSuccess: (response: any) => {
-              console.log('✅ Payment success callback:', response);
-              setCurrentStep('success');
-              setIsProcessing(false);
+        const config = {
+          root: '',
+          flow: 'DEFAULT',
+          data: {
+            orderId: data.data.orderId,
+            token: data.data.txnToken,
+            tokenType: 'TXN_TOKEN',
+            amount: String(parseFloat(data.data.amount).toFixed(2)),
+          },
+          handler: {
+            notifyMerchant: (eventName: string, eventData: any) => {
+              console.log('notifyMerchant:', eventName, eventData);
+              if (eventName === 'APP_CLOSED') {
+                setIsProcessing(false);
+              }
             },
-            onFailure: (error: any) => {
-              console.error('❌ Payment failure callback:', error);
-              toast({
-                title: "Payment Failed",
-                description: "Transaction was unsuccessful. Please try again.",
-                variant: "destructive",
-              });
-              setIsProcessing(false);
+            transactionStatus: (paymentStatus: any) => {
+              console.log('Payment status:', paymentStatus);
+              if (paymentStatus.STATUS === 'TXN_SUCCESS') {
+                const completedOrderId = data.data.orderId;
+                const order: OrderDetails = {
+                  orderId: completedOrderId,
+                  items: cartItems,
+                  total,
+                  shippingAddress,
+                  paymentMethod: 'paytm',
+                  estimatedDelivery: getEstimatedDelivery(),
+                };
+                setOrderDetails(order);
+                setCurrentStep('success');
+                setIsProcessing(false);
+                toast({
+                  title: "Payment Successful!",
+                  description: `Order ${completedOrderId} confirmed.`,
+                });
+                onOrderComplete(completedOrderId);
+              } else {
+                toast({
+                  title: "Payment Failed",
+                  description: paymentStatus.RESPMSG || 'Transaction was unsuccessful.',
+                  variant: "destructive",
+                });
+                setIsProcessing(false);
+              }
             },
-            onCancel: () => {
-              console.log('⏸️ Payment cancelled by user');
-              toast({
-                title: "Payment Cancelled",
-                description: "You cancelled the payment. Try again if needed.",
-                variant: "destructive",
-              });
-              setIsProcessing(false);
-            }
-          }
+          },
         };
 
-        console.log('🚀 Invoking Paytm checkout...');
-        window.Paytm.CheckoutJS.invoke(txn);
+        window.Paytm.CheckoutJS.onLoad(function () {
+          window.Paytm.CheckoutJS.init(config)
+            .then(function () {
+              window.Paytm.CheckoutJS.invoke();
+            })
+            .catch(function (error: any) {
+              console.error('Paytm init error:', error);
+              toast({
+                title: "Payment Error",
+                description: "Failed to initialize payment gateway.",
+                variant: "destructive",
+              });
+              setIsProcessing(false);
+            });
+        });
       } catch (error) {
         console.error('❌ Payment error:', error);
         toast({

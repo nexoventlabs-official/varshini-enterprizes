@@ -15,7 +15,7 @@ export interface CartState {
   itemCount: number;
 }
 
-export type PaymentMethod = 'debit-credit' | 'upi' | 'cash-on-delivery';
+export type PaymentMethod = 'paytm' | 'debit-credit' | 'upi' | 'cash-on-delivery';
 
 type CartAction =
   | { type: 'ADD_ITEM'; payload: Omit<CartItem, 'quantity'> }

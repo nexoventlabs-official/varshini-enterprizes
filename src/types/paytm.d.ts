@@ -2,9 +2,9 @@ declare global {
   interface Window {
     Paytm: {
       CheckoutJS: {
-        invoke: (config: any) => void;
-        onSuccess?: (response: any) => void;
-        onError?: (error: any) => void;
+        onLoad: (callback: () => void) => void;
+        init: (config: any) => Promise<void>;
+        invoke: () => void;
       };
     };
   }
