@@ -9,6 +9,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import PaymentModal from '@/components/PaymentModal';
 import BulkOrderModal from '@/components/BulkOrderModal';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/i18n';
 
 interface ProductCardProps {
   id: string;
@@ -38,6 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { addItem, state } = useCart();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
+  const { t, formatPrice } = useLocale();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showBulkOrderModal, setShowBulkOrderModal] = useState(false);
 
@@ -54,14 +56,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (isFavorite(id)) {
       removeFavorite(id);
       toast({
-        title: "Removed from Favorites",
-        description: `${name} has been removed from your favorites.`,
+        title: t.common.removedFromFavorites,
+        description: `${name}`,
       });
     } else {
       addFavorite(favoriteItem);
       toast({
-        title: "Added to Favorites!",
-        description: `${name} has been added to your favorites.`,
+        title: t.common.addedToFavorites,
+        description: `${name}`,
       });
     }
   };
@@ -76,8 +78,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     });
 
     toast({
-      title: "Added to Cart!",
-      description: `${name} has been added to your cart.`,
+      title: t.common.addedToCart,
+      description: `${name}`,
     });
 
     // Show payment modal immediately after adding to cart
@@ -88,8 +90,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const handlePaymentSelect = (method: string) => {
     toast({
-      title: "Order Placed!",
-      description: `Your order will be processed via ${method.replace('-', ' ')}.`,
+      title: t.common.orderPlaced,
+      description: `${method.replace('-', ' ')}`,
     });
     // Clear cart after payment is done
     clearCart();
@@ -109,13 +111,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {isEcoFriendly && (
               <Badge variant="secondary" className="bg-success text-success-foreground">
                 <Leaf className="w-3 h-3 mr-1" />
-                Eco-Friendly
+                {t.productCard.ecoFriendly}
               </Badge>
             )}
             {isCertified && (
               <Badge variant="outline" className="bg-white/90">
                 <Award className="w-3 h-3 mr-1" />
-                Certified
+                {t.productCard.certified}
               </Badge>
             )}
           </div>
@@ -137,7 +139,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div className="absolute inset-x-3 bottom-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
             <Button size="sm" className="w-full" onClick={handleQuickAdd} disabled={!inStock}>
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {inStock ? 'Quick Add' : 'Out of Stock'}
+              {inStock ? t.productCard.quickAdd : t.productCard.outOfStock}
             </Button>
           </div>
         </div>
@@ -155,28 +157,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
           <div className="flex items-center space-x-2 mb-3">
             <span className="font-inter font-bold text-xl text-primary">
-              ₹{price}
+              {formatPrice(price)}
             </span>
             {originalPrice && (
               <span className="font-inter text-sm text-muted-foreground line-through">
-                ₹{originalPrice}
+                {formatPrice(originalPrice)}
               </span>
             )}
             {originalPrice && (
               <Badge variant="secondary" className="text-xs">
-                {Math.round(((originalPrice - price) / originalPrice) * 100)}% OFF
+                {Math.round(((originalPrice - price) / originalPrice) * 100)}% {t.productCard.off}
               </Badge>
             )}
           </div>
 
           <div className="flex items-center justify-between">
             <span className={`font-inter text-sm ${inStock ? 'text-success' : 'text-destructive'}`}>
-              {inStock ? 'In Stock' : 'Out of Stock'}
+              {inStock ? t.productCard.inStock : t.productCard.outOfStock}
             </span>
             <div className="flex items-center space-x-1">
               <div className="w-2 h-2 bg-success rounded-full"></div>
               <span className="font-inter text-xs text-muted-foreground">
-                Fast Delivery
+                {t.productCard.fastDelivery}
               </span>
             </div>
           </div>
@@ -185,11 +187,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <CardFooter className="p-4 pt-0 space-x-2">
           <Button asChild className="flex-1">
             <Link to={`/product/${id}`}>
-              View Details
+              {t.productCard.viewDetails}
             </Link>
           </Button>
           <Button variant="outline" onClick={() => setShowBulkOrderModal(true)}>
-            Bulk Order
+            {t.productCard.bulkOrder}
           </Button>
         </CardFooter>
 

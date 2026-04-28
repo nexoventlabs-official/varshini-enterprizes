@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Heart, Shield, Leaf, Users, Star, Phone, MessageSquare, ShoppingCart } from 'lucide-react';
+import { ArrowRight, Heart, Shield, Leaf, Users, Star, Phone, MessageSquare, ShoppingCart, Globe2, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,11 @@ import ScrollToTop from '@/components/ScrollToTop';
 import heroImage from '@/assets/hero-woman.jpg';
 import sanitaryPadsImage from '@/assets/product-sanitary-pads.png';
 import hygienePadsImage from '@/assets/product-hygiene-pads.png';
+import { useLocale } from '@/i18n';
 
 const Homepage = () => {
+  const { t } = useLocale();
+
   // Sample product data
   const featuredProducts = [
     {
@@ -45,24 +48,24 @@ const Homepage = () => {
     },
   ];
 
-  const testimonials = [
+  const categoryData = [
     {
-      name: 'Priya Sharma',
-      location: 'Chennai',
-      text: 'Safe, affordable, and comfortable. These products have truly made a difference in my life.',
-      rating: 5,
+      title: t.categories.sanitaryNapkins,
+      description: t.categories.sanitaryNapkinsDesc,
+      image: sanitaryPadsImage,
+      href: '/products?category=sanitary-napkins',
     },
     {
-      name: 'Dr. Meera Nair',
-      location: 'NGO Director, Kochi',
-      text: 'We distribute these products in rural areas. The quality is excellent and women trust this brand.',
-      rating: 5,
+      title: t.categories.hygienePads,
+      description: t.categories.hygienePadsDesc,
+      image: hygienePadsImage,
+      href: '/products?category=hygiene-pads',
     },
     {
-      name: 'Anjali Reddy',
-      location: 'Hyderabad',
-      text: 'Finally, eco-friendly products that don\'t compromise on comfort. Highly recommended!',
-      rating: 5,
+      title: t.categories.bulkPacks,
+      description: t.categories.bulkPacksDesc,
+      image: sanitaryPadsImage,
+      href: '/products?category=bulk-packs',
     },
   ];
 
@@ -77,16 +80,16 @@ const Homepage = () => {
               <div className="space-y-4">
                 <Badge className="bg-white/20 text-white border-white/30">
                   <Heart className="w-4 h-4 mr-2" />
-                  Women's Health First
+                  {t.hero.badge}
                 </Badge>
                 <h1 className="font-nunito font-bold text-4xl md:text-6xl text-white leading-tight">
-                  Affordable Hygiene,
+                  {t.hero.title1}
                   <span className="block text-white/90">
-                    Dignity for Every Woman
+                    {t.hero.title2}
                   </span>
                 </h1>
                 <p className="font-inter text-lg text-white/80 max-w-lg">
-                  Premium quality, eco-friendly sanitary napkins and hygiene pads made accessible for all women across India. Because every woman deserves comfort and confidence.
+                  {t.hero.subtitle}
                 </p>
               </div>
 
@@ -94,7 +97,7 @@ const Homepage = () => {
                 <Button size="lg" asChild className="bg-white text-gray-900 hover:bg-gray-100 font-bold shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white">
                   <Link to="/products" className="text-gray-900 font-bold">
                     <ShoppingCart className="w-5 h-5 mr-2 text-gray-900" />
-                    Buy Now
+                    {t.hero.buyNow}
                   </Link>
                 </Button>
 
@@ -104,15 +107,15 @@ const Homepage = () => {
               <div className="flex flex-wrap items-center gap-6 pt-4">
                 <div className="flex items-center space-x-2 text-white/80">
                   <Shield className="w-5 h-5" />
-                  <span className="font-inter text-sm">Certified Safe</span>
+                  <span className="font-inter text-sm">{t.hero.certifiedSafe}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-white/80">
                   <Leaf className="w-5 h-5" />
-                  <span className="font-inter text-sm">100% Eco-Friendly</span>
+                  <span className="font-inter text-sm">{t.hero.ecoFriendly}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-white/80">
                   <Heart className="w-5 h-5" />
-                  <span className="font-inter text-sm">10,000+ Happy Customers</span>
+                  <span className="font-inter text-sm">{t.hero.happyCustomers}</span>
                 </div>
               </div>
             </div>
@@ -132,16 +135,40 @@ const Homepage = () => {
               <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-hover">
                 <div className="text-center">
                   <div className="font-nunito font-bold text-2xl text-primary">500+</div>
-                  <div className="font-inter text-sm text-muted-foreground">NGO Partners</div>
+                  <div className="font-inter text-sm text-muted-foreground">{t.hero.ngoPartners}</div>
                 </div>
               </div>
 
               <div className="absolute -top-6 -right-6 bg-white rounded-xl p-4 shadow-hover">
                 <div className="text-center">
                   <div className="font-nunito font-bold text-2xl text-success">100%</div>
-                  <div className="font-inter text-sm text-muted-foreground">Eco-Friendly</div>
+                  <div className="font-inter text-sm text-muted-foreground">{t.hero.ecoFriendly}</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* International Trust Bar */}
+      <section className="py-4 bg-primary/5 border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap justify-center items-center gap-8 text-sm font-inter text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Globe2 className="w-4 h-4 text-primary" />
+              <span>ISO 9001:2015</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-primary" />
+              <span>FDA Approved</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
+              <span>CE Certified</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Leaf className="w-4 h-4 text-primary" />
+              <span>Eco-Certified</span>
             </div>
           </div>
         </div>
@@ -152,34 +179,15 @@ const Homepage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-nunito font-bold text-3xl md:text-4xl text-foreground mb-4">
-              Our Product Categories
+              {t.categories.heading}
             </h2>
             <p className="font-inter text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose from our range of premium hygiene products designed for comfort, safety, and sustainability.
+              {t.categories.subtitle}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'Sanitary Napkins',
-                description: 'Ultra-soft, absorbent napkins for everyday comfort and protection.',
-                image: sanitaryPadsImage,
-                href: '/products?category=sanitary-napkins',
-              },
-              {
-                title: 'Hygiene Pads',
-                description: 'Premium organic cotton pads for sensitive skin and heavy flow days.',
-                image: hygienePadsImage,
-                href: '/products?category=hygiene-pads',
-              },
-              {
-                title: 'Bulk Packs',
-                description: 'Economy packs for NGOs, schools, and bulk requirements.',
-                image: sanitaryPadsImage,
-                href: '/products?category=bulk-packs',
-              },
-            ].map((category, index) => (
+            {categoryData.map((category, index) => (
               <Card key={index} className="group overflow-hidden border-0 shadow-card hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
                 <div className="relative overflow-hidden">
                   <img
@@ -196,7 +204,7 @@ const Homepage = () => {
                   <p className="font-inter text-muted-foreground mb-4">{category.description}</p>
                   <Button asChild className="w-full">
                     <Link to={category.href}>
-                      Explore Products
+                      {t.categories.exploreProducts}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
                   </Button>
@@ -212,10 +220,10 @@ const Homepage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-nunito font-bold text-3xl md:text-4xl text-foreground mb-4">
-              Featured Products
+              {t.featured.heading}
             </h2>
             <p className="font-inter text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our most popular and trusted products, loved by thousands of women across India.
+              {t.featured.subtitle}
             </p>
           </div>
 
@@ -228,7 +236,7 @@ const Homepage = () => {
           <div className="text-center">
             <Button size="lg" asChild>
               <Link to="/products">
-                View All Products
+                {t.featured.viewAll}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
@@ -242,21 +250,21 @@ const Homepage = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <h2 className="font-nunito font-bold text-3xl md:text-4xl text-foreground">
-                Breaking the Silence Around
-                <span className="block text-primary">Menstrual Health</span>
+                {t.awarenessSection.heading1}
+                <span className="block text-primary">{t.awarenessSection.heading2}</span>
               </h2>
               <div className="space-y-4">
                 <p className="font-playfair italic text-lg text-foreground/80">
-                  "Every girl deserves to understand her body, access quality products, and continue her education without interruption."
+                  {t.awarenessSection.quote}
                 </p>
                 <p className="font-inter text-muted-foreground">
-                  We're committed to menstrual health awareness through educational campaigns, free distribution programs, and partnerships with NGOs across Tamil Nadu and beyond.
+                  {t.awarenessSection.description}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild>
                   <Link to="/awareness">
-                    Learn More
+                    {t.awarenessSection.learnMore}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
@@ -269,19 +277,19 @@ const Homepage = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center">
                     <div className="font-nunito font-bold text-3xl text-primary">75%</div>
-                    <div className="font-inter text-sm text-muted-foreground">Girls miss school during periods</div>
+                    <div className="font-inter text-sm text-muted-foreground">{t.awarenessSection.stat1Label}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-nunito font-bold text-3xl text-success">500+</div>
-                    <div className="font-inter text-sm text-muted-foreground">NGO partnerships</div>
+                    <div className="font-inter text-sm text-muted-foreground">{t.awarenessSection.stat2Label}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-nunito font-bold text-3xl text-accent">50K+</div>
-                    <div className="font-inter text-sm text-muted-foreground">Women educated</div>
+                    <div className="font-inter text-sm text-muted-foreground">{t.awarenessSection.stat3Label}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-nunito font-bold text-3xl text-primary">100%</div>
-                    <div className="font-inter text-sm text-muted-foreground">Safe materials</div>
+                    <div className="font-inter text-sm text-muted-foreground">{t.awarenessSection.stat4Label}</div>
                   </div>
                 </div>
               </div>
@@ -295,19 +303,19 @@ const Homepage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-nunito font-bold text-3xl md:text-4xl text-foreground mb-4">
-              What Our Customers Say
+              {t.testimonials.heading}
             </h2>
             <p className="font-inter text-lg text-muted-foreground max-w-2xl mx-auto">
-              Real stories from women who trust Varshini Enterprises for their hygiene needs.
+              {t.testimonials.subtitle}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+            {t.testimonials.items.map((testimonial, index) => (
               <Card key={index} className="border-0 shadow-card hover:shadow-hover transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                    {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
@@ -336,7 +344,7 @@ const Homepage = () => {
         >
           <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
             <MessageSquare className="w-6 h-6" />
-            <span className="hidden sm:inline ml-2">WhatsApp</span>
+            <span className="hidden sm:inline ml-2">{t.common.whatsapp}</span>
           </a>
         </Button>
       </div>

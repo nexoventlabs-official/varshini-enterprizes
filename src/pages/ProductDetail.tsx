@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useToast } from '@/hooks/use-toast';
 import { getProductById, getRelatedProducts } from '@/data/products';
+import { useLocale } from '@/i18n';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const ProductDetail = () => {
   const { addItem, updateQuantity, state: cartState } = useCart();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
+  const { t, formatPrice } = useLocale();
 
   const productData = id ? getProductById(id) : undefined;
   const relatedProducts = id ? getRelatedProducts(id, 3) : [];
@@ -28,10 +30,10 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-nunito font-bold text-3xl text-foreground mb-4">Product Not Found</h1>
-          <p className="font-inter text-muted-foreground mb-6">The product you are looking for does not exist.</p>
+          <h1 className="font-nunito font-bold text-3xl text-foreground mb-4">{t.productDetail.productNotFound}</h1>
+          <p className="font-inter text-muted-foreground mb-6">{t.productDetail.productNotFoundDesc}</p>
           <Button asChild>
-            <Link to="/products">Back to Shop</Link>
+            <Link to="/products">{t.productDetail.backToShop}</Link>
           </Button>
         </div>
       </div>
@@ -75,8 +77,8 @@ const ProductDetail = () => {
     }
 
     toast({
-      title: "Added to Cart!",
-      description: `${quantity} x ${product.name} added to your cart.`,
+      title: t.common.addedToCart,
+      description: `${quantity} x ${product.name}`,
     });
   };
 
@@ -97,14 +99,14 @@ const ProductDetail = () => {
     if (isFavorite(product.id)) {
       removeFavorite(product.id);
       toast({
-        title: "Removed from Favorites",
-        description: `${product.name} has been removed from your favorites.`,
+        title: t.common.removedFromFavorites,
+        description: `${product.name}`,
       });
     } else {
       addFavorite(favoriteItem);
       toast({
-        title: "Added to Favorites!",
-        description: `${product.name} has been added to your favorites.`,
+        title: t.common.addedToFavorites,
+        description: `${product.name}`,
       });
     }
   };
@@ -114,9 +116,9 @@ const ProductDetail = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
-          <Link to="/" className="hover:text-primary">Home</Link>
+          <Link to="/" className="hover:text-primary">{t.productDetail.home}</Link>
           <span>/</span>
-          <Link to="/products" className="hover:text-primary">Shop</Link>
+          <Link to="/products" className="hover:text-primary">{t.productDetail.shop}</Link>
           <span>/</span>
           <span className="text-foreground">{product.name}</span>
         </nav>
@@ -125,7 +127,7 @@ const ProductDetail = () => {
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/products">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Shop
+            {t.productDetail.backToShop}
           </Link>
         </Button>
 
@@ -182,22 +184,22 @@ const ProductDetail = () => {
                   ))}
                 </div>
                 <span className="font-inter text-sm text-muted-foreground">
-                  {product.rating} ({product.reviewCount} reviews)
+                  {product.rating} ({product.reviewCount} {t.productDetail.reviews})
                 </span>
               </div>
 
               {/* Price */}
               <div className="flex items-center space-x-3 mb-6">
                 <span className="font-nunito font-bold text-3xl text-primary">
-                  ₹{product.price}
+                  {formatPrice(product.price)}
                 </span>
                 {product.originalPrice && (
                   <>
                     <span className="font-inter text-xl text-muted-foreground line-through">
-                      ₹{product.originalPrice}
+                      {formatPrice(product.originalPrice)}
                     </span>
                     <Badge variant="secondary">
-                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% {t.productCard.off}
                     </Badge>
                   </>
                 )}
@@ -208,18 +210,18 @@ const ProductDetail = () => {
                 {product.isEcoFriendly && (
                   <Badge variant="secondary" className="bg-success text-success-foreground">
                     <Leaf className="w-3 h-3 mr-1" />
-                    Eco-Friendly
+                    {t.productCard.ecoFriendly}
                   </Badge>
                 )}
                 {product.isCertified && (
                   <Badge variant="outline">
                     <Award className="w-3 h-3 mr-1" />
-                    Certified
+                    {t.productCard.certified}
                   </Badge>
                 )}
                 <Badge variant="outline">
                   <Shield className="w-3 h-3 mr-1" />
-                  Dermatologically Tested
+                  {t.productDetail.dermoTested}
                 </Badge>
               </div>
 
@@ -227,7 +229,7 @@ const ProductDetail = () => {
               <div className="flex items-center space-x-2 mb-6">
                 <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-success' : 'bg-destructive'}`}></div>
                 <span className={`font-inter ${product.inStock ? 'text-success' : 'text-destructive'}`}>
-                  {product.inStock ? `In Stock (${product.stockCount} available)` : 'Out of Stock'}
+                  {product.inStock ? `${t.productDetail.inStockLabel} (${product.stockCount} ${t.productDetail.available})` : t.productDetail.outOfStockLabel}
                 </span>
               </div>
 
@@ -239,7 +241,7 @@ const ProductDetail = () => {
             {/* Quantity and Actions */}
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <span className="font-inter font-medium">Quantity:</span>
+                <span className="font-inter font-medium">{t.productDetail.quantity}:</span>
                 <div className="flex items-center border border-input rounded-md">
                   <Button
                     variant="ghost"
@@ -263,7 +265,7 @@ const ProductDetail = () => {
                 </div>
                 {quantity >= product.stockCount && (
                   <span className="text-sm text-muted-foreground">
-                    Max available: {product.stockCount}
+                    {t.productDetail.maxAvailable}: {product.stockCount}
                   </span>
                 )}
               </div>
@@ -277,13 +279,13 @@ const ProductDetail = () => {
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {product.inStock
-                    ? `Add to Cart - ₹${product.price * quantity}`
-                    : 'Out of Stock'
+                    ? `${t.productDetail.addToCart} - ${formatPrice(product.price * quantity)}`
+                    : t.productDetail.outOfStockLabel
                   }
                 </Button>
                 <Button size="lg" variant="outline" onClick={handleBulkOrder}>
                   <Users className="w-5 h-5 mr-2" />
-                  Bulk Order
+                  {t.productDetail.bulkOrder}
                 </Button>
               </div>
 
@@ -293,11 +295,11 @@ const ProductDetail = () => {
                     ? 'text-destructive fill-destructive'
                     : 'text-muted-foreground hover:text-destructive'
                     }`} />
-                  {isFavorite(product.id) ? 'Remove from Favorites' : 'Add to Favorites'}
+                  {isFavorite(product.id) ? t.productDetail.removeFromFavorites : t.productDetail.addToFavorites}
                 </Button>
                 <Button variant="ghost" size="sm">
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share Product
+                  {t.productDetail.shareProduct}
                 </Button>
               </div>
             </div>
@@ -307,14 +309,14 @@ const ProductDetail = () => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-nunito font-semibold text-foreground">Quick Support</h3>
+                    <h3 className="font-nunito font-semibold text-foreground">{t.productDetail.quickSupport}</h3>
                     <p className="font-inter text-sm text-muted-foreground">
-                      Have questions? Chat with us on WhatsApp
+                      {t.productDetail.quickSupportDesc}
                     </p>
                   </div>
                   <Button asChild className="bg-green-500 hover:bg-green-600">
                     <a href="https://wa.me/919176254234" target="_blank" rel="noopener noreferrer">
-                      WhatsApp Now
+                      {t.productDetail.whatsappNow}
                     </a>
                   </Button>
                 </div>
@@ -327,15 +329,15 @@ const ProductDetail = () => {
         <div className="mb-16">
           <Tabs defaultValue="description" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="specifications">Specifications</TabsTrigger>
-              <TabsTrigger value="certifications">Certifications</TabsTrigger>
+              <TabsTrigger value="description">{t.productDetail.description}</TabsTrigger>
+              <TabsTrigger value="specifications">{t.productDetail.specifications}</TabsTrigger>
+              <TabsTrigger value="certifications">{t.productDetail.certifications}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="description" className="mt-6">
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="font-nunito font-semibold text-xl mb-4">Product Features</h3>
+                  <h3 className="font-nunito font-semibold text-xl mb-4">{t.productDetail.productFeatures}</h3>
                   <ul className="grid md:grid-cols-2 gap-3">
                     {product.features.map((feature, index) => (
                       <li key={index} className="flex items-center space-x-2">
@@ -351,7 +353,7 @@ const ProductDetail = () => {
             <TabsContent value="specifications" className="mt-6">
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="font-nunito font-semibold text-xl mb-4">Technical Specifications</h3>
+                  <h3 className="font-nunito font-semibold text-xl mb-4">{t.productDetail.techSpecs}</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     {Object.entries(product.specifications).map(([key, value]) => (
                       <div key={key} className="flex justify-between items-center py-2 border-b border-border">
@@ -367,7 +369,7 @@ const ProductDetail = () => {
             <TabsContent value="certifications" className="mt-6">
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="font-nunito font-semibold text-xl mb-4">Quality Certifications</h3>
+                  <h3 className="font-nunito font-semibold text-xl mb-4">{t.productDetail.qualityCerts}</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     {product.certifications.map((cert, index) => (
                       <div key={index} className="flex items-center space-x-3 p-3 bg-secondary rounded-lg">
@@ -385,7 +387,7 @@ const ProductDetail = () => {
         {/* Related Products */}
         <div>
           <h2 className="font-nunito font-bold text-3xl text-foreground mb-8">
-            Related Products
+            {t.productDetail.relatedProducts}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {relatedProducts.map((product) => (

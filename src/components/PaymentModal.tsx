@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/contexts/CartContext';
+import { useLocale } from '@/i18n';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
+  const { formatPrice } = useLocale();
 
   const loadPaytmScript = (): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -280,7 +282,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 {itemCount} item{itemCount > 1 ? 's' : ''}
               </span>
               <span className="font-bold text-2xl text-primary">
-                ₹{total.toFixed(2)}
+                {formatPrice(total)}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
@@ -301,7 +303,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             ) : (
               <div className="flex items-center space-x-2">
                 <CreditCard className="w-5 h-5" />
-                <span>Pay ₹{total.toFixed(2)} with Paytm</span>
+                <span>Pay {formatPrice(total)} with Paytm</span>
               </div>
             )}
           </Button>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/i18n';
 
 interface BulkOrderModalProps {
   isOpen: boolean;
@@ -39,14 +40,15 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
+  const { t, formatPrice } = useLocale();
 
   const organizationTypes = [
-    { value: 'ngo', label: 'NGO/Non-Profit', discount: 40 },
-    { value: 'school', label: 'School/Educational Institution', discount: 35 },
-    { value: 'hospital', label: 'Hospital/Healthcare', discount: 30 },
-    { value: 'corporate', label: 'Corporate/Company', discount: 25 },
-    { value: 'government', label: 'Government Organization', discount: 30 },
-    { value: 'distributor', label: 'Retail Distributor', discount: 20 },
+    { value: 'ngo', label: t.bulkModal.orgTypes.ngo, discount: 40 },
+    { value: 'school', label: t.bulkModal.orgTypes.school, discount: 35 },
+    { value: 'hospital', label: t.bulkModal.orgTypes.hospital, discount: 30 },
+    { value: 'corporate', label: t.bulkModal.orgTypes.corporate, discount: 25 },
+    { value: 'government', label: t.bulkModal.orgTypes.government, discount: 30 },
+    { value: 'distributor', label: t.bulkModal.orgTypes.distributor, discount: 20 },
   ];
 
   const getSelectedOrgType = () => {
@@ -81,8 +83,8 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
       setIsSuccess(true);
       
       toast({
-        title: "Bulk Order Request Submitted!",
-        description: "Our team will contact you within 24 hours with a detailed quote.",
+        title: t.bulkModal.successTitle,
+        description: t.bulkModal.successDesc,
       });
       
       // Auto close after success
@@ -116,10 +118,10 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h3 className="font-nunito font-bold text-xl text-foreground mb-2">
-              Bulk Order Request Submitted!
+              {t.bulkModal.successTitle}
             </h3>
             <p className="text-muted-foreground mb-4">
-              Our team will contact you within 24 hours with a detailed quote and next steps.
+              {t.bulkModal.successDesc}
             </p>
             <Badge variant="secondary" className="bg-success text-success-foreground">
               Request ID: BO-{Date.now().toString().slice(-6)}
@@ -138,10 +140,10 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
             <div>
               <CardTitle className="flex items-center space-x-2">
                 <Package className="w-5 h-5 text-primary" />
-                <span>Bulk Order Request</span>
+                <span>{t.bulkModal.title}</span>
               </CardTitle>
               <p className="text-muted-foreground mt-1">
-                Minimum order quantity: {minQuantity} units
+                {t.bulkModal.minOrder} {minQuantity} {t.bulkModal.units}
               </p>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -167,7 +169,7 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                     </h3>
                     <p className="text-sm text-muted-foreground">{product.category}</p>
                     <p className="font-nunito font-bold text-primary mt-1">
-                      ₹{product.price} per unit
+                      {formatPrice(product.price)} {t.bulkModal.perUnit}
                     </p>
                   </div>
                 </div>
@@ -180,26 +182,26 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-lg">
                     <Calculator className="w-4 h-4" />
-                    <span>Bulk Pricing</span>
+                    <span>{t.bulkModal.bulkPricing}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span>Base Price ({currentQuantity} units):</span>
-                      <span>₹{pricing.total.toLocaleString()}</span>
+                      <span>{t.bulkModal.basePrice} ({currentQuantity} {t.bulkModal.units}):</span>
+                      <span>{formatPrice(pricing.total)}</span>
                     </div>
                     <div className="flex justify-between text-success">
-                      <span>{getSelectedOrgType()?.label} Discount ({getSelectedOrgType()?.discount}%):</span>
-                      <span>-₹{pricing.discount.toLocaleString()}</span>
+                      <span>{getSelectedOrgType()?.label} {t.bulkModal.discount} ({getSelectedOrgType()?.discount}%):</span>
+                      <span>-{formatPrice(pricing.discount)}</span>
                     </div>
                     <hr />
                     <div className="flex justify-between font-bold text-lg">
-                      <span>Final Price:</span>
-                      <span className="text-primary">₹{pricing.finalPrice.toLocaleString()}</span>
+                      <span>{t.bulkModal.finalPrice}:</span>
+                      <span className="text-primary">{formatPrice(pricing.finalPrice)}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      *Final pricing may vary based on delivery location and additional requirements
+                      {t.bulkModal.pricingNote}
                     </p>
                   </div>
                 </CardContent>
@@ -211,7 +213,7 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="organizationName">Organization Name *</Label>
+                <Label htmlFor="organizationName">{t.bulkModal.orgName} *</Label>
                 <Input
                   id="organizationName"
                   value={formData.organizationName}
@@ -220,7 +222,7 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                 />
               </div>
               <div>
-                <Label htmlFor="contactPerson">Contact Person *</Label>
+                <Label htmlFor="contactPerson">{t.bulkModal.contactPerson} *</Label>
                 <Input
                   id="contactPerson"
                   value={formData.contactPerson}
@@ -232,7 +234,7 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="email">{t.bulkModal.email} *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -242,7 +244,7 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone">{t.bulkModal.phone} *</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -254,22 +256,22 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="organizationType">Organization Type *</Label>
+                <Label htmlFor="organizationType">{t.bulkModal.orgType} *</Label>
                 <Select value={formData.organizationType} onValueChange={(value) => handleInputChange('organizationType', value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select organization type" />
+                    <SelectValue placeholder={t.bulkModal.selectOrgType} />
                   </SelectTrigger>
                   <SelectContent>
                     {organizationTypes.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
-                        {type.label} ({type.discount}% discount)
+                        {type.label} ({type.discount}% {t.bulkModal.discount.toLowerCase()})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="quantity">Quantity (Min: {minQuantity}) *</Label>
+                <Label htmlFor="quantity">{t.bulkModal.quantityLabel} (Min: {minQuantity}) *</Label>
                 <Input
                   id="quantity"
                   type="number"
@@ -280,14 +282,14 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                 />
                 {currentQuantity > 0 && currentQuantity < minQuantity && (
                   <p className="text-sm text-destructive mt-1">
-                    Minimum quantity is {minQuantity} units
+                    {t.bulkModal.minQuantityError} {minQuantity} {t.bulkModal.units}
                   </p>
                 )}
               </div>
             </div>
 
             <div>
-              <Label htmlFor="deliveryAddress">Delivery Address *</Label>
+              <Label htmlFor="deliveryAddress">{t.bulkModal.deliveryAddress} *</Label>
               <Textarea
                 id="deliveryAddress"
                 value={formData.deliveryAddress}
@@ -298,12 +300,12 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="requirements">Special Requirements</Label>
+              <Label htmlFor="requirements">{t.bulkModal.specialRequirements}</Label>
               <Textarea
                 id="requirements"
                 value={formData.requirements}
                 onChange={(e) => handleInputChange('requirements', e.target.value)}
-                placeholder="Any special packaging, delivery timeline, or other requirements..."
+                placeholder={t.bulkModal.specialReqPlaceholder}
                 rows={3}
               />
             </div>
@@ -318,14 +320,14 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
                 {isSubmitting ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Submitting...</span>
+                    <span>{t.bulkModal.submitting}</span>
                   </div>
                 ) : (
-                  'Submit Bulk Order Request'
+                  t.bulkModal.submit
                 )}
               </Button>
               <Button type="button" variant="outline" onClick={onClose} size="lg">
-                Cancel
+                {t.bulkModal.cancel}
               </Button>
             </div>
 
@@ -333,9 +335,9 @@ const BulkOrderModal: React.FC<BulkOrderModalProps> = ({
               <div className="flex items-start space-x-3">
                 <Phone className="w-5 h-5 text-primary mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">Need immediate assistance?</p>
+                  <p className="font-medium text-foreground">{t.bulkModal.needHelp}</p>
                   <p className="text-sm text-muted-foreground">
-                    Call us at +91 98765 43210 or email varshinienterprises29@gmail.com
+                    {t.bulkModal.helpContact}
                   </p>
                 </div>
               </div>

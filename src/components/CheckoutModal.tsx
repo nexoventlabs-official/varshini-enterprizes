@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/contexts/CartContext';
+import { useLocale, getRegionConfig } from '@/i18n';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -133,6 +134,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { formatPrice, locale } = useLocale();
+  const regionConfig = getRegionConfig(locale);
 
   const paymentMethods = [
     {
@@ -151,13 +154,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     },
   ];
 
-  const indianStates = [
-    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
-    'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
-    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
-    'Uttarakhand', 'West Bengal', 'Delhi'
-  ];
 
   const generateOrderId = () => {
     const timestamp = Date.now().toString();
@@ -432,7 +428,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     id="addressLine1"
                     value={shippingAddress.addressLine1}
                     onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                    placeholder="House/Flat No., Building Name"
+                    placeholder={regionConfig.addressPlaceholder1}
                     required
                   />
                 </div>
@@ -443,7 +439,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     id="addressLine2"
                     value={shippingAddress.addressLine2}
                     onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                    placeholder="Street, Area, Locality"
+                    placeholder={regionConfig.addressPlaceholder2}
                   />
                 </div>
 
@@ -458,13 +454,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state">State *</Label>
+                    <Label htmlFor="state">{regionConfig.stateLabel} *</Label>
                     <Select value={shippingAddress.state} onValueChange={(value) => handleInputChange('state', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
+                        <SelectValue placeholder={`Select ${regionConfig.stateLabel.toLowerCase()}`} />
                       </SelectTrigger>
                       <SelectContent>
-                        {indianStates.map((state) => (
+                        {regionConfig.states.map((state) => (
                           <SelectItem key={state} value={state}>
                             {state}
                           </SelectItem>
@@ -473,11 +469,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="pincode">Pincode *</Label>
+                    <Label htmlFor="pincode">{regionConfig.postalLabel} *</Label>
                     <Input
                       id="pincode"
                       value={shippingAddress.pincode}
                       onChange={(e) => handleInputChange('pincode', e.target.value)}
+                      placeholder={regionConfig.postalPlaceholder}
                       required
                     />
                   </div>
@@ -489,7 +486,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     id="landmark"
                     value={shippingAddress.landmark}
                     onChange={(e) => handleInputChange('landmark', e.target.value)}
-                    placeholder="Near famous landmark"
+                    placeholder={regionConfig.landmarkPlaceholder}
                   />
                 </div>
               </div>
@@ -589,13 +586,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                               <p className="font-medium text-sm">{item.name}</p>
                               <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                             </div>
-                            <p className="font-semibold">₹{item.price * item.quantity}</p>
+                            <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
                           </div>
                         ))}
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                           <span>Total:</span>
-                          <span className="text-primary">₹{total}</span>
+                          <span className="text-primary">{formatPrice(total)}</span>
                         </div>
                       </div>
                     </CardContent>

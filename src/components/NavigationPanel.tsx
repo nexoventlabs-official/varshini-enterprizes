@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useToast } from '@/hooks/use-toast';
 import CheckoutModal from '@/components/CheckoutModal';
+import { useLocale } from '@/i18n';
 
 interface NavigationPanelProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   const { state: cartState, removeItem, updateQuantity, clearCart } = useCart();
   const { state: favoritesState, removeFavorite, clearFavorites } = useFavorites();
   const { toast } = useToast();
+  const { formatPrice } = useLocale();
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   const handleCheckout = () => {
@@ -129,7 +131,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                             <p className="text-xs text-muted-foreground">{item.category}</p>
                             <div className="flex items-center justify-between mt-2">
                               <span className="font-nunito font-bold text-primary">
-                                ₹{item.price}
+                                {formatPrice(item.price)}
                               </span>
                               <div className="flex items-center space-x-2">
                                 <Button
@@ -173,7 +175,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-nunito font-semibold text-foreground">Total:</span>
                         <span className="font-nunito font-bold text-xl text-primary">
-                          ₹{cartState.total}
+                          {formatPrice(cartState.total)}
                         </span>
                       </div>
                       <div className="space-y-2">
@@ -227,11 +229,11 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center space-x-2">
                                 <span className="font-nunito font-bold text-primary">
-                                  ₹{item.price}
+                                  {formatPrice(item.price)}
                                 </span>
                                 {item.originalPrice && (
                                   <span className="text-xs text-muted-foreground line-through">
-                                    ₹{item.originalPrice}
+                                    {formatPrice(item.originalPrice)}
                                   </span>
                                 )}
                               </div>

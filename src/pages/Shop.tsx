@@ -8,6 +8,7 @@ import ProductCard from '@/components/ProductCard';
 import BackButton from '@/components/BackButton';
 import ScrollToTop from '@/components/ScrollToTop';
 import allProducts from '@/data/products';
+import { useLocale } from '@/i18n';
 
 const Shop = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +16,7 @@ const Shop = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState('all');
-
+  const { t, formatPrice: fp } = useLocale();
 
   const categories = [
     'all',
@@ -26,10 +27,10 @@ const Shop = () => {
   ];
 
   const priceRanges = [
-    { value: 'all', label: 'All Prices' },
-    { value: '0-50', label: 'Under ₹50' },
-    { value: '50-100', label: '₹50 - ₹100' },
-    { value: '100-200', label: '₹100 - ₹200' },
+    { value: 'all', label: t.shop.allPrices },
+    { value: '0-50', label: `${t.priceRanges.under} ${fp(50)}` },
+    { value: '50-100', label: `${fp(50)} - ${fp(100)}` },
+    { value: '100-200', label: `${fp(100)} - ${fp(200)}` },
   ];
 
   // Filter and sort products
@@ -91,10 +92,10 @@ const Shop = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-nunito font-bold text-4xl text-foreground mb-4">
-            Shop Our Products
+            {t.shop.heading}
           </h1>
           <p className="font-inter text-lg text-muted-foreground">
-            Premium quality, eco-friendly hygiene products for every woman's needs.
+            {t.shop.subtitle}
           </p>
         </div>
 
@@ -105,7 +106,7 @@ const Shop = () => {
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search products..."
+                placeholder={t.shop.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -120,7 +121,7 @@ const Shop = () => {
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
+                    {category === 'all' ? t.shop.allCategories : category}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -146,10 +147,10 @@ const Shop = () => {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="name">Name: A to Z</SelectItem>
+                <SelectItem value="featured">{t.shop.sortFeatured}</SelectItem>
+                <SelectItem value="price-low">{t.shop.sortPriceLow}</SelectItem>
+                <SelectItem value="price-high">{t.shop.sortPriceHigh}</SelectItem>
+                <SelectItem value="name">{t.shop.sortName}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -159,7 +160,7 @@ const Shop = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <span className="font-inter text-muted-foreground">
-              {filteredProducts.length} products found
+              {filteredProducts.length} {t.shop.productsFound}
             </span>
             {selectedCategory !== 'all' && (
               <Badge variant="secondary" className="capitalize">
@@ -190,10 +191,10 @@ const Shop = () => {
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <div className="font-nunito font-semibold text-xl text-muted-foreground mb-2">
-              No products found
+              {t.shop.noProducts}
             </div>
             <p className="font-inter text-muted-foreground">
-              Try adjusting your search criteria or browse all categories.
+              {t.shop.noProductsHint}
             </p>
           </div>
         ) : (

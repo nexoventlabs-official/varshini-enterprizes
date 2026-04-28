@@ -1,22 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
+import { useLocale } from '@/i18n';
 
 const Footer = () => {
+  const { t } = useLocale();
+
+  const quickLinks = [
+    { name: t.footer.aboutUs, href: '/about-us' },
+    { name: t.footer.ourProducts, href: '/products' },
+    { name: t.footer.awareness, href: '/awareness' },
+  ];
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <div className="flex items-center space-x-2 mb-6">
+            <div className="mb-6">
               <span className="font-nunito font-bold text-2xl">
                 Varshini Enterprises
               </span>
             </div>
             <p className="font-inter text-primary-foreground/80 mb-6 max-w-md">
-              Promoting women's health and dignity through affordable, eco-friendly hygiene products.
-              Every woman deserves access to safe, quality menstrual care.
+              {t.footer.tagline}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
@@ -33,15 +41,10 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-nunito font-semibold text-lg mb-6">Quick Links</h4>
+            <h4 className="font-nunito font-semibold text-lg mb-6">{t.footer.quickLinks}</h4>
             <ul className="space-y-3">
-              {[
-                { name: 'About Us', href: '/about-us' },
-                { name: 'Our Products', href: '/products' },
-
-                { name: 'Awareness', href: '/awareness' },
-              ].map((link) => (
-                <li key={link.name}>
+              {quickLinks.map((link) => (
+                <li key={link.href}>
                   <Link
                     to={link.href}
                     className="font-inter text-primary-foreground/80 hover:text-white transition-colors"
@@ -55,7 +58,7 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-nunito font-semibold text-lg mb-6">Contact Us</h4>
+            <h4 className="font-nunito font-semibold text-lg mb-6">{t.footer.contactUs}</h4>
             <ul className="space-y-4">
               <li className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 mt-1 text-primary-foreground/80" />
@@ -90,32 +93,32 @@ const Footer = () => {
         <div className="border-t border-white/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="font-inter text-primary-foreground/70 text-sm">
-              © 2025 Varshini Enterprises. All rights reserved.
+              © 2025 Varshini Enterprises. {t.footer.allRightsReserved}
             </p>
             <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
               <Link
                 to="/privacy-policy"
                 className="font-inter text-primary-foreground/70 hover:text-white text-sm transition-colors"
               >
-                Privacy Policy
+                {t.footer.privacyPolicy}
               </Link>
               <Link
                 to="/terms-conditions"
                 className="font-inter text-primary-foreground/70 hover:text-white text-sm transition-colors"
               >
-                Terms & Conditions
+                {t.footer.termsConditions}
               </Link>
               <Link
                 to="/shipping-policy"
                 className="font-inter text-primary-foreground/70 hover:text-white text-sm transition-colors"
               >
-                Shipping Policy
+                {t.footer.shippingPolicy}
               </Link>
               <Link
                 to="/cancellation-refund"
                 className="font-inter text-primary-foreground/70 hover:text-white text-sm transition-colors"
               >
-                Cancellation & Refund
+                {t.footer.cancellationRefund}
               </Link>
             </div>
           </div>
