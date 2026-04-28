@@ -22,16 +22,11 @@ export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
     localStorage.setItem('varshini-locale', newLocale);
-    // Update document lang attribute
-    const langMap: Record<Locale, string> = {
-      'en-IN': 'en',
-      'en-US': 'en',
-      'de-EU': 'de',
-    };
-    document.documentElement.lang = langMap[newLocale];
+    document.documentElement.lang = 'en';
   }, []);
 
-  const t = translations[locale];
+  // Always use Indian English content — locale only controls currency & shipping regions
+  const t = translations['en-IN'];
 
   const fp = useCallback(
     (priceInINR: number) => formatPrice(priceInINR, locale),
